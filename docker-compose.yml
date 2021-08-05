@@ -1,0 +1,84 @@
+version: "3"
+
+services:
+  zookeeper:
+    image: docker.io/bitnami/zookeeper:3.7
+    ports:
+      - "2181:2181"
+    volumes:
+      - "zookeeper_data:/bitnami"
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
+    networks:
+      - kafkatest
+
+  kafka:
+    image: docker.io/bitnami/kafka:2
+    ports:
+      - "9092:9092"
+    volumes:
+      - "kafka_data:/bitnami"
+    environment:
+      - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
+      - ALLOW_PLAINTEXT_LISTENER=yes
+    depends_on:
+      - zookeeper
+    networks:
+      - kafkatest
+
+  db:
+    image: postgres:10
+    container_name: postgres_db
+    restart: always
+    volumes:
+      - kafkapgdata:/var/lib/postgresql/data
+      - ./db:/docker-entrypoint-initdb.d/
+    ports:
+      - "5432:5432"
+    networks:
+      - kafkatest
+    environment:
+      POSTGRES_PASSWORD: root
+
+  phpconsumer:
+    build:
+      context: ./php-consumer
+      dockerfile: Dockerfile.php
+    container_name: php-kafka
+    environment:
+      - DB_USER=postgres
+      - DB_PASS=root
+      - DB_HOST=postgres_db
+      - DB_PORT=5432
+    ports:
+      - "80:80"
+    volumes:
+      - "$PWD/php-consumer:/var/www/html"
+    depends_on:
+      - kafka
+      - db
+    networks:
+      - kafkatest
+
+  kotlinproducer:
+    build:
+      context: ./kotlin-producer
+      dockerfile: src/main/docker/Dockerfile.jvm
+    container_name: kotlin-producer
+    ports:
+      - "8080:8080"
+    depends_on:
+      - kafka
+      - db
+    networks:
+      - kafkatest
+
+volumes:
+  zookeeper_data:
+    driver: local
+  kafka_data:
+    driver: local
+  kafkapgdata:
+
+networks:
+  kafkatest:

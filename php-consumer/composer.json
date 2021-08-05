@@ -1,0 +1,20 @@
+{
+  "name": "vendor_name/php",
+  "description": "Php Consumer",
+  "minimum-stability": "stable",
+  "license": "proprietary",
+  "authors": [
+    {
+      "name": "pvinicius",
+      "email": "email@example.com"
+    }
+  ],
+  "autoload": {
+    "psr-4": {"PhpConsumer\\": "src/"}
+  },
+  "require": {
+    "doctrine/orm": "^2.6.2",
+    "php-di/php-di": "^6.3",
+    "symfony/cache": "^5.3"
+  }
+}
