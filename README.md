@@ -2,6 +2,12 @@
  Kafka with Kotlin producer and Php consumer 📤️📥
 </h2>
 
+## Techs
+- [Docker](https://www.docker.com/)
+- [Traefik](https://doc.traefik.io/traefik/)
+- [Kafka](https://kafka.apache.org/intro)
+- [Socket.io](https://socket.io/)
+
 ## Summary
 
 - [Usage](#usage)
@@ -26,6 +32,9 @@ $ ./mvnw package
 ```bash
 $ docker-compose up
 ```
+
+### 4. Access frontend to register a user
+`http://web.kafka.localhost`
 
 ## API
 

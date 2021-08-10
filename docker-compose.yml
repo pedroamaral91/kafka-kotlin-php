@@ -1,6 +1,26 @@
 version: "3"
 
 services:
+  reverse-proxy:
+    image: traefik:v2.4
+    container_name: reverseproxy
+    command:
+      - --log.level=DEBUG
+      - --accesslog=true
+      - --api.insecure=true
+      - --providers.docker=true
+      - --providers.docker.exposedByDefault=false
+    ports:
+      - "80:80"
+      - "8090:8080"
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.reverse-proxy.rule=Host(`traefik.localhost`)
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - kafkaexternal
+
   zookeeper:
     image: docker.io/bitnami/zookeeper:3.7
     ports:
@@ -10,12 +30,12 @@ services:
     environment:
       - ALLOW_ANONYMOUS_LOGIN=yes
     networks:
-      - kafkatest
+      - kafkainternal
 
   kafka:
     image: docker.io/bitnami/kafka:2
     ports:
-      - "9092:9092"
+       - "9092:9092"
     volumes:
       - "kafka_data:/bitnami"
     environment:
@@ -24,7 +44,7 @@ services:
     depends_on:
       - zookeeper
     networks:
-      - kafkatest
+      - kafkainternal
 
   db:
     image: postgres:10
@@ -36,7 +56,7 @@ services:
     ports:
       - "5432:5432"
     networks:
-      - kafkatest
+      - kafkainternal
     environment:
       POSTGRES_PASSWORD: root
 
@@ -50,28 +70,74 @@ services:
       - DB_PASS=root
       - DB_HOST=postgres_db
       - DB_PORT=5432
+    labels:
+      - phpconsumer.component.description=phpconsumer
+      - traefik.enable=true
+      - traefik.http.routers.phpconsumer.rule=Host(`api.phpconsumer.com`)
     ports:
-      - "80:80"
+      - "81:80"
     volumes:
       - "$PWD/php-consumer:/var/www/html"
     depends_on:
       - kafka
       - db
     networks:
-      - kafkatest
+      - kafkainternal
 
   kotlinproducer:
     build:
       context: ./kotlin-producer
       dockerfile: src/main/docker/Dockerfile.jvm
     container_name: kotlin-producer
+    labels:
+      - kotlinproducer.component.description=kotlinproducer
+      - traefik.enable=true
+      - traefik.http.routers.kotlinproducer.rule=Host(`api.kotlinproducer.localhost`)
+      - traefik.docker.network=kafkaexternal
     ports:
       - "8080:8080"
     depends_on:
       - kafka
       - db
     networks:
-      - kafkatest
+      - kafkainternal
+      - kafkaexternal
+
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    container_name: kafka-web
+    volumes:
+      - $PWD/web:/app
+    labels:
+      - web.component.description=web
+      - traefik.enable=true
+      - traefik.http.routers.web.rule=Host(`web.kafka.localhost`)
+      - traefik.docker.network=kafkaexternal
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+    networks:
+      - kafkainternal
+      - kafkaexternal
+
+  node-socket:
+    restart: always
+    build:
+      context: ./node-socket
+      dockerfile: Dockerfile
+    container_name: nodesocket
+    depends_on:
+      - kafka
+    volumes:
+      - $PWD/node-socket/app
+    ports:
+      - "3001:3000"
+    networks:
+      - kafkainternal
+
 
 volumes:
   zookeeper_data:
@@ -81,4 +147,7 @@ volumes:
   kafkapgdata:
 
 networks:
-  kafkatest:
+  kafkaexternal:
+    external: true
+  kafkainternal:
+    external: false

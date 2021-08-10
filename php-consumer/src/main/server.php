@@ -2,10 +2,11 @@
 
 require __DIR__ . "/bootstrap.php";
 
-$conf = new RdKafka\Conf();
+$conf_consumer = new RdKafka\Conf();
+
 
 // Set a rebalance callback to log partition assignments (optional)
-$conf->setRebalanceCb(function (RdKafka\KafkaConsumer $kafka, $err, array $partitions = null) {
+$conf_consumer->setRebalanceCb(function (RdKafka\KafkaConsumer $kafka, $err, array $partitions = null) {
     switch ($err) {
         case RD_KAFKA_RESP_ERR__ASSIGN_PARTITIONS:
             echo "Assign: ";
@@ -26,17 +27,17 @@ $conf->setRebalanceCb(function (RdKafka\KafkaConsumer $kafka, $err, array $parti
 
 // Configure the group.id. All consumer with the same group.id will consume
 // different partitions.
-$conf->set('group.id', 'myConsumerGroup');
+$conf_consumer->set('group.id', 'myConsumerGroup');
 
 // Initial list of Kafka brokers
-$conf->set('metadata.broker.list', 'kafka');
+$conf_consumer->set('metadata.broker.list', 'kafka');
 
 // Set where to start consuming messages when there is no initial offset in
 // offset store or the desired offset is out of range.
 // 'earliest': start from the beginning
-$conf->set('auto.offset.reset', 'earliest');
+$conf_consumer->set('auto.offset.reset', 'earliest');
 
-$consumer = new RdKafka\KafkaConsumer($conf);
+$consumer = new RdKafka\KafkaConsumer($conf_consumer);
 
 // Subscribe to topic 'test'
 $consumer->subscribe(['test']);

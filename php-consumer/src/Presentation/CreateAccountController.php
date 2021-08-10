@@ -3,6 +3,7 @@
 namespace PhpConsumer\Presentation;
 
 use PhpConsumer\Data\Contracts\CreateAccount;
+use PhpConsumer\Infra\Messaging\Kafka\KafkaProducer;
 
 final class CreateAccountController
 {
@@ -19,7 +20,14 @@ final class CreateAccountController
     public function handle(mixed $request) {
         try {
             var_dump(["Reading message..." => $request]);
-            $this->createAccount->create($request->account, $request->agency, $request->bank, $request->owner);
+            $account = $this->createAccount->create($request->account, $request->agency, $request->bank, $request->owner);
+            $producer = new KafkaProducer();
+            $producer->sendMessage(json_encode([
+                "owner" => $account->getOwner(),
+                "agency" => $account->getAgencyNumber(),
+                "account" => $account->getAccountNumber(),
+                "bank_name" => $account->getBankName()
+            ]));
         } catch (\Throwable $exception) {
             var_dump(["error" => $exception->getMessage()]);
         }
