@@ -10,10 +10,18 @@
 
 ## Summary
 
+- [Overview](#overview)
 - [Usage](#usage)
 - [API](#api)
-- [Overview](#overview)
-- [Explanation](#architecture)
+
+## Overview
+
+### 1. Explanation
+The project consist in one API rest made using Kotlin with quarkus framework and one small process in php that listsen an script with (while true) to consume kafka messages.
+Basically, when we made a call in POST, a new user will be create and it will emit a message to Kafka test topic, and PHP script will consume that message creating a new bank account:
+
+![Flow diagram example](https://raw.githubusercontent.com/pedroamaral91/kafka-kotlin-php/main/kafka-example.png)
+
 
 ## Usage
 
@@ -27,6 +35,11 @@ $ git clone https://github.com/pedroamaral91/kafka-kotlin-php.git
 ```bash
 $ cd kotlin-producer
 $ ./mvnw package
+```
+
+### 3. Create a external network
+```bash
+$ docker network create kafkaexternal
 ```
 ### 3. Build images and up containers
 ```bash
@@ -78,18 +91,5 @@ Retrieve a list of users
  "name": "Pedro Teste",
  "email": "pedro@pedro.com"
 ```
-
-## Overview
-
-### 1. List of dependecies
-- [Docker](https://www.docker.com/)
-
-
-### 2. Explanation
-The project consist in one API rest made using Kotlin with quarkus framework and one small process in php that listsen an script with (while true) to consume kafka messages.
-Basically, when we made a call in POST, a new user will be create and it will emit a message to Kafka test topic, and PHP script will consume that message creating a new bank account:
-
-![Flow diagram example](https://raw.githubusercontent.com/pedroamaral91/kafka-kotlin-php/main/kafka-example.png)
-
 
 
